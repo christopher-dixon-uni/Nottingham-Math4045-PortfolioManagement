@@ -26,12 +26,10 @@ X, y = create_sequences(close_prices_scaled, sequence_length)
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Dropout
 
-# Splitting the data into training and testing sets
 train_size = int(len(X) * 0.8)
 X_train, X_test = X[:train_size], X[train_size:]
 y_train, y_test = y[:train_size], y[train_size:]
 
-# Building the LSTM model
 model = Sequential([
     LSTM(50, return_sequences=True, input_shape=(X_train.shape[1], 1)),
     Dropout(0.2),
@@ -41,21 +39,15 @@ model = Sequential([
     Dense(1)
 ])
 
-# Compile the model
 model.compile(optimizer='adam', loss='mean_squared_error')
 
-# Train the model
 model.fit(X_train, y_train, batch_size=32, epochs=100, validation_data=(X_test, y_test))
 
-# Making predictions
 predictions = model.predict(X_test)
 predictions = scaler.inverse_transform(predictions)  # Invert normalization
 
-# You can now compare these predictions with the actual prices to evaluate the model
-
 import matplotlib.pyplot as plt
 
-# Assuming y_test is also scaled using the same scaler
 actual_prices = scaler.inverse_transform(y_test.reshape(-1, 1))
 
 plt.plot(actual_prices, color='red', label='Actual Prices')
