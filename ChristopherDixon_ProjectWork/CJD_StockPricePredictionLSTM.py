@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
-df = pd.read_csv('VTI.csv')
+df = pd.read_csv('CJD_VTI.csv')
 df['Date'] = pd.to_datetime(df['Date'])
 df.set_index('Date', inplace=True)
 
