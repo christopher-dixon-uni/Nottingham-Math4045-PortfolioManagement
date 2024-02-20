@@ -1,5 +1,5 @@
 # Portfolio-Optimisation
 
-[./Dashboard](Dash library testing)
-[./Data exploration](Looking at historical stock performance and distribution)
-[./Options](Looking at pricing American stock options)
+[Dash library testing](./Dashboard)
+[Looking at historical stock performance and distribution]("./Data exploration")
+[Looking at pricing American stock options](./Options)
