@@ -6,84 +6,79 @@ from arch import arch_model
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from datetime import datetime, timedelta
 
-# ticker and dates
-ticker = 'AAPL'
-start = '2014-01-01'
-today = datetime.now().date().strftime("%Y-%m-%d")
+# list of tickers
+tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN']
 
-# historical price data from yahoo
-stock_data = yf.download(ticker, start=start, end=today)
+def fit_garch_and_plot(ticker):
+    # ticker and dates
+    start = '2021-01-01'
+    today = datetime.now().date().strftime("%Y-%m-%d")
 
-returns = 100 * stock_data['Adj Close'].pct_change().dropna()
+    # historical price data from yahoo
+    stock_data = yf.download(ticker, start=start, end=today)
 
-# plot returns
-plt.figure(figsize=(10,4))
-plt.plot(returns)
-plt.ylabel('Pct Return')
-plt.title('AAPL Returns')
+    returns = 100 * stock_data['Adj Close'].pct_change().dropna()
 
-# parameters to test in GARCH model
-parameters = [(1,0), (2,0), (3,0), (1,1), (2,1), (3,1), (1,2), (2,2), (3,2), (1,3), (2,3), (3,3)]
+    # plot returns
+    plt.figure(figsize=(10,4))
+    plt.plot(returns)
+    plt.ylabel('Pct Return')
+    plt.title(f'{ticker} Returns')
 
-# AIC test to see which parameter yields the best model
-# can change AIC to BIC for a different test, code is the same otherwise
-def test_garch_models(returns, parameters):
-    best_aic = float("inf")
-    best_model = None
-    best_parameter = None
-    
-    for p, q in parameters:
-        model = arch_model(returns, p=p, q=q)
-        results = model.fit()
-        aic = results.aic
-        if aic < best_aic:
-            best_aic = aic
-            best_model = results
-            best_parameter = (p, q)    
-    return best_model, best_parameter
+    # parameters to test in GARCH model
+    p_range = range(1, 4)
+    q_range = range(1, 4)
 
-# get the best parameters
-best_model, best_parameter = test_garch_models(returns, parameters)
-p, q = best_parameter
+    # perform grid search for best parameters
+    best_p, best_q = grid_search_garch(returns, p_range, q_range, criterion='aic')
+    print(f"Best (p, q) parameters for {ticker}: ({best_p}, {best_q})")
 
-# fit garch model
-model = arch_model(returns, p=p, q=q)
-model_fit = model.fit()
-model_fit.summary()
-
-#%%
-
-# rolling forecast origin
-rolling_predictions = []
-test_size = 365
-
-for i in range(test_size):
-    train = returns[:-(test_size-i)]
-    model = arch_model(train, p=p, q=q)
+    # fit garch model with best parameters
+    model = arch_model(returns, p=best_p, q=best_q)
     model_fit = model.fit(disp='off')
-    pred = model_fit.forecast(horizon=1)
-    rolling_predictions.append(np.sqrt(pred.variance.values[-1,:][0]))
 
-rolling_predictions = pd.Series(rolling_predictions, index=returns.index[-365:])
+    # evaluate the GARCH model
+    print(model_fit.summary())
 
-plt.figure(figsize=(10,4))
-true, = plt.plot(returns[-365:])
-preds, = plt.plot(rolling_predictions)
-plt.title('Volatility Prediction', fontsize=20)
-plt.legend(['True Returns', 'Predicted Volatility'], fontsize=16)
+    # plot ACF and PACF of residuals
+    residuals = model_fit.resid
+    plot_acf(residuals, lags=20)
+    plot_pacf(residuals, lags=20)
+    plt.show()
 
-#%%
+    # forecast horizon
+    horizon = 7
+    
+    # fit GARCH model with best parameters
+    model = arch_model(returns, p=best_p, q=best_q)
+    model_fit = model.fit(disp='off')
+    pred = model_fit.forecast(horizon=horizon)
+    future_dates = [returns.index[-1] + timedelta(days=i) for i in range(1, horizon+1)]
+    pred = pd.Series(np.sqrt(pred.variance.values[-1,:]), index=future_dates)
+    plt.figure(figsize=(10,4))
+    plt.plot(pred)
+    plt.title(f'Volatility {horizon} Days Prediction for {ticker}', fontsize=20)
+    plt.show()
 
-# forecast horizon
-horizon = 7
+def grid_search_garch(returns, p_range, q_range, criterion='aic'):
+    best_criterion = np.inf if criterion == 'aic' else np.inf
+    best_params = None
+    
+    for p in p_range:
+        for q in q_range:
+            model = arch_model(returns, p=p, q=q)
+            results = model.fit(disp='off')
+            if criterion == 'aic':
+                current_criterion = results.aic
+            elif criterion == 'bic':
+                current_criterion = results.bic
+            
+            if current_criterion < best_criterion:
+                best_criterion = current_criterion
+                best_params = (p, q)
+                
+    return best_params
 
-# forecast
-train = returns
-model = arch_model(train, p=p, q=q)
-model_fit = model.fit(disp='off')
-pred = model_fit.forecast(horizon=horizon)
-future_dates = [returns.index[-1] + timedelta(days=i) for i in range(1,horizon+1)]
-pred = pd.Series(np.sqrt(pred.variance.values[-1,:]), index=future_dates)
-plt.figure(figsize=(10,4))
-plt.plot(pred)
-plt.title('Volatility 7 Days Prediction', fontsize=20)
+# fit GARCH model for each tickers
+for ticker in tickers:
+    fit_garch_and_plot(ticker)
