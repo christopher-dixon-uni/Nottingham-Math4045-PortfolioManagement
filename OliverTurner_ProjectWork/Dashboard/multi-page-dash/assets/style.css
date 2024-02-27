@@ -1,0 +1,9 @@
+div.rounded-box {
+    border: 2px solid #808080; /* Solid border with a light grey color */
+    border-radius: 10px; /* Rounded corners */
+    padding: 20px; /* Padding inside the box */
+    margin-bottom: 20px; /* Margin at the bottom of each box */
+    margin-left: 20px; /* Margin at the left of each box */
+    margin-right: 20px; /* Margin at the right of each box */
+    background-color: #FFFFFF; /* Light background color for the box */
+}
