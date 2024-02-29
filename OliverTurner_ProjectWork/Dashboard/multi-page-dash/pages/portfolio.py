@@ -9,6 +9,7 @@ import numpy as np
 from dash import dash_table
 import plotly.graph_objects as go
 from optimisation_output import return_assets_weights
+import warnings
 #styles
 negative_style = {"color": "#ff0000"} #red
 positive_style = {"color": "#00ff00"} #green
@@ -147,11 +148,24 @@ indicators_sp500.update_layout(
 
 
 
-#treemap 
-sector_weights_df = return_assets_weights()
-treemap_fig = px.treemap(sector_weights_df, path=[px.Constant("Sectors"), 'Sector'], values='Weight')
-graph_component = dcc.Graph(
-    figure=fig,
+#treemap
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    sector_weights_df = return_assets_weights()
+
+sector_weights_df['Weight'] = round(sector_weights_df['optimal_weights'] * 100,2)
+
+treemap_fig = px.treemap(sector_weights_df,
+                         path=[px.Constant("Sectors"), 'sector'],
+                         values='Weight',
+                         hover_data={'Weight': True})
+
+treemap_fig.update_traces(textinfo='label+percent parent',
+                  textfont=dict(color='white', size=26))
+
+
+treemap_graph_component = dcc.Graph(
+    figure=treemap_fig,
     id='sector-treemap'
 )
 
@@ -197,7 +211,7 @@ layout = dbc.Container([
             ], width={'size': 2, 'offset': 0, 'order': 3}),
             
     dbc.Col(
-    graph_component,
+    treemap_graph_component,
     width=12,  # You can adjust the width as needed for your layout
     # Specify additional Bootstrap column properties if required
     )   
