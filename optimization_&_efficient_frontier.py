@@ -4,17 +4,12 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from datetime import datetime, timedelta
+from stock_pick_algo import return_stocks
 
 # Section 1: Define Tickers and Time Range
-tickers = ["MMM", "AOS", "ABT", "ABBV", "ACN", "ADBE", "AMD", "AES", "AFL", "A", 
-    "APD", "ABNB", "AKAM", "ALB", "ARE", "ALGN", "ALLE", "LNT", "ALL", "GOOGL", 
-    "GOOG", "MO", "AMZN", "AMCR", "AEE", "AAL", "AEP", "AXP", "AIG", "AMT", 
-    "AWK", "AMP", "AME", "AMGN", "APH", "ADI", "ANSS", "AON", "APA", "AAPL", 
-    "AMAT", "APTV", "ACGL", "ADM", "ANET", "AJG", "AIZ", "T", "ATO", "ADSK", 
-    "ADP", "AZO", "AVB", "AVY", "AXON", "BKR", "BALL", "BAC", "BK", "BBWI", 
-    "BAX", "BDX", "BBY", "BIO", "TECH", "BIIB", "BLK", "BX", "BA", 
-    "BKNG", "BWA", "BXP", "BSX", "BMY", "AVGO", "BR", "BRO", "BLDR", 
-    "BG", "CDNS", "CZR", "CPT", "CPB", "COF", "CAH", "KMX", "CCL", "CARR"]
+stock_list = return_stocks()
+stock_list = list(stock_list['ticker'])
+tickers = stock_list
 end_date = datetime.today()
 start_date = end_date - timedelta(days=5*365)
 
