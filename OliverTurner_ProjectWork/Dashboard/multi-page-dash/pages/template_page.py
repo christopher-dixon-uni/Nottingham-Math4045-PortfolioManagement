@@ -64,3 +64,10 @@ def update_returns_graph(start_date, end_date): #define the graph here
     fig.update_layout(xaxis_title='Date', yaxis_title='Cumulative Returns', xaxis=dict(tickformat='%Y-%m-%d'))
     return fig
 
+
+fig = px.treemap(df, path=[px.Constant("world"), 'continent', 'country'], values='pop',
+                  color='lifeExp', hover_data=['iso_alpha'],
+                  color_continuous_scale='RdBu',
+                  color_continuous_midpoint=np.average(df['lifeExp'], weights=df['pop']))
+fig.update_layout(margin = dict(t=50, l=25, r=25, b=25))
+fig.show()

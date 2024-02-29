@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 import datetime as dt
 
-def return_stocks():
+def return_stocks(max=500):
     """
     selecting from the S&p500 according to the following criteria:
     - Market Cap: >$20 Billion
@@ -24,7 +24,7 @@ def return_stocks():
     sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
     sp500.to_csv('sp500.csv')
     sp500 = pd.read_csv('sp500.csv')
-    sp500 = sp500['Symbol'].tolist()[5]
+    sp500 = sp500['Symbol'].tolist()[max]
 
     stock_temp = yf.Ticker('AAPL')
     df_temp = pd.DataFrame(stock_temp.info).head(1)
