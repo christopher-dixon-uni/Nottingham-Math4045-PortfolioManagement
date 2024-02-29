@@ -24,7 +24,7 @@ def return_stocks():
     sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
     sp500.to_csv('sp500.csv')
     sp500 = pd.read_csv('sp500.csv')
-    sp500 = sp500['Symbol'].tolist()
+    sp500 = sp500['Symbol'].tolist()[5]
 
     stock_temp = yf.Ticker('AAPL')
     df_temp = pd.DataFrame(stock_temp.info).head(1)
