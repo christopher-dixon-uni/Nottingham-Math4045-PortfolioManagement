@@ -46,4 +46,5 @@ def return_assets_weights():
 
     return stock_info_weights_df[['ticker', 'sector', 'optimal_weights']]
 
-print(return_assets_weights().groupby('sector')['optimal_weights'].sum())
+if __name__ == "__main__":
+    print(return_assets_weights().groupby('sector')['optimal_weights'].sum())

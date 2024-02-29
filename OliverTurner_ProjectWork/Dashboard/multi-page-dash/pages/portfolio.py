@@ -8,7 +8,7 @@ from datetime import date
 import numpy as np
 from dash import dash_table
 import plotly.graph_objects as go
-
+from optimisation_output import return_assets_weights
 #styles
 negative_style = {"color": "#ff0000"} #red
 positive_style = {"color": "#00ff00"} #green
@@ -145,6 +145,17 @@ indicators_sp500.update_layout(
     margin=dict(l=50, r=50, t=30, b=30)
 )
 
+
+
+#treemap 
+sector_weights_df = return_assets_weights()
+treemap_fig = px.treemap(sector_weights_df, path=[px.Constant("Sectors"), 'Sector'], values='Weight')
+graph_component = dcc.Graph(
+    figure=fig,
+    id='sector-treemap'
+)
+
+
 # Define the layout for this page
 layout = dbc.Container([
     #Title
@@ -183,9 +194,13 @@ layout = dbc.Container([
                       figure=indicators_sp500,
                       style={'height':550}),
             html.Hr()
-            ], width={'size': 2, 'offset': 0, 'order': 3})
-,
-    
+            ], width={'size': 2, 'offset': 0, 'order': 3}),
+            
+    dbc.Col(
+    graph_component,
+    width=12,  # You can adjust the width as needed for your layout
+    # Specify additional Bootstrap column properties if required
+    )   
     
     ],className="rounded-box"),
 
