@@ -36,13 +36,12 @@ for ticker in sp500:
         stock_obj = yf.Ticker(ticker)
 
         df = pd.DataFrame(stock_obj.info).head(1)
-        data = pd.concat([data, df.iloc[[0]]], ignore_index=True)
-        data.insert(loc = 0,column='ticker', value=sp500)
-        
+        df.insert(loc = 0,column='ticker', value=ticker)
+        data = pd.concat([data, df.iloc[[0]]], ignore_index=True)        
     except:
         pass
 
-
+data.insert(0, 'ticker', data.pop('ticker'))
 
 #filter data
 filtered_data = data[(data['marketCap'] > 20000000000) & (data['forwardPE'] < 20) & (data['priceToBook'] > 1) & (data['dividendYield'] > 0.025)]
