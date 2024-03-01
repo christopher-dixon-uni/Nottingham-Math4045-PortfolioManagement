@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from datetime import datetime, timedelta
 from stock_pick_algo import return_stocks
+import datetime as dt
+import json
+
+today = dt.date.today().strftime('%Y-%m-%d')
+
 
 def return_assets_weights():
     # Section 1: Define Tickers and Time Range
@@ -16,7 +21,31 @@ def return_assets_weights():
     start_date = end_date - timedelta(days=5*365)
 
     # Section 2: Download Adjusted Close Prices
-    adj_close_df = pd.concat([yf.download(ticker, start=start_date, end=end_date)['Adj Close'] for ticker in tickers], axis=1, keys=tickers)
+        #check if data has been updated today
+    try:
+        with open('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/adj_close_df.json', 'r') as f:
+            last_updated = json.load(f)
+            if last_updated['last_updated'] == today:
+                print('Data already updated today, returning...')
+                updated = True
+            else:
+                updated = False
+    except:
+        updated = False
+        #if no json exists, create one
+        with open('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/adj_close_df.json', 'w') as f:
+            json.dump({'last_updated': today}, f)
+            print('Created last_updated.json')
+        
+    if updated == False:
+        print('Data not updated today, updating...')
+        print('Updating may take some time.')
+        adj_close_df = pd.concat([yf.download(ticker, start=start_date, end=end_date)['Adj Close'] for ticker in tickers], axis=1, keys=tickers)
+        #save to csv
+        adj_close_df.to_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/adj_close_df.csv')
+
+    adj_close_df = pd.read_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/adj_close_df.csv', index_col=0)
+    
 
     # Section 3: Calculate Lognormal Returns
     log_returns = np.log(adj_close_df / adj_close_df.shift()).dropna()
@@ -44,7 +73,7 @@ def return_assets_weights():
 
      
 
-    return stock_info_weights_df[['ticker', 'sector', 'optimal_weights']]
+    return stock_info_weights_df[['ticker', 'longName', 'sector', 'optimal_weights']]
 
 if __name__ == "__main__":
-    print(return_assets_weights().groupby('sector')['optimal_weights'].sum())
+    print(return_assets_weights())

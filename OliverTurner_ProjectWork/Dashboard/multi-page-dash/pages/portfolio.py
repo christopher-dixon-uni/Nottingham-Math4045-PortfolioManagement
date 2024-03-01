@@ -109,7 +109,12 @@ indicators_ptf.add_trace(go.Indicator(
 
 indicators_ptf.update_layout(
     grid = {'rows': 4, 'columns': 1, 'pattern': "independent"},
-    margin=dict(l=50, r=50, t=30, b=30)
+    margin=dict(l=50, r=50, t=30, b=30),
+    template="plotly_dark",
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    font_color="white"
+    
 )
 
 indicators_sp500 = go.Figure()
@@ -143,7 +148,12 @@ indicators_sp500.add_trace(go.Indicator(
 
 indicators_sp500.update_layout(
     grid = {'rows': 4, 'columns': 1, 'pattern': "independent"},
-    margin=dict(l=50, r=50, t=30, b=30)
+    margin=dict(l=50, r=50, t=30, b=30),
+    template="plotly_dark",
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    font_color="white"
+
 )
 
 
@@ -153,16 +163,38 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     sector_weights_df = return_assets_weights()
 
-sector_weights_df['Weight'] = round(sector_weights_df['optimal_weights'] * 100,2)
+if __name__ == "__main__":
+    print(sector_weights_df)
+
 
 treemap_fig = px.treemap(sector_weights_df,
-                         path=[px.Constant("Sectors"), 'sector'],
-                         values='Weight',
-                         hover_data={'Weight': True})
+                         path=[px.Constant("Portfolio"), 'sector', 'ticker'],
+                         values='optimal_weights',
+                         title='Portfolio Weightings by Sector and Stock',
+                         color='optimal_weights',
+                         hover_data={
+                            'ticker': True,
+                            'longName': True,
+                            'sector': True,
+                            'optimal_weights': ':.2%'  
+                         }, 
+                         color_continuous_scale='RdBu')
 
 treemap_fig.update_traces(textinfo='label+percent parent',
                   textfont=dict(color='white', size=26))
 
+treemap_fig.update_traces(hovertemplate = "<b>%{customdata[0]}</b><br>" + \
+                "Long Name: %{customdata[1]}<br>" + \
+                "Sector: %{customdata[2]}<br>" + \
+                "Optimal Weights: %{customdata[3]:.2%}<extra></extra>"
+)
+
+treemap_fig.update_layout(
+    template="plotly_dark",
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    font_color="white"
+)
 
 treemap_graph_component = dcc.Graph(
     figure=treemap_fig,
@@ -175,7 +207,7 @@ layout = dbc.Container([
     #Title
     dbc.Row([
         dbc.Col(html.H1("Portfolio", className="text-center"), width=12),
-    ], className="rounded-box"),
+    ]), #className="rounded-box")
 
     #date range
     dbc.Row([
@@ -212,11 +244,10 @@ layout = dbc.Container([
             
     dbc.Col(
     treemap_graph_component,
-    width=12,  # You can adjust the width as needed for your layout
-    # Specify additional Bootstrap column properties if required
+    width=12,
     )   
     
-    ],className="rounded-box"),
+    ]), #className="rounded-box")
 
 
 
@@ -239,7 +270,7 @@ layout = dbc.Container([
     dcc.Graph(id="monthly-returns-graph"),
     dcc.Graph(id="monthly-weights-graph"),
 
-    ],className="rounded-box"),
+    ]), #className="rounded-box")
 
 ], fluid=True)
 
@@ -268,7 +299,14 @@ def update_returns_graph(start_date, end_date):
         height=700
     )
     
-    fig.update_layout(xaxis_title='Date', yaxis_title='Cumulative Returns', xaxis=dict(tickformat='%Y-%m-%d'))
+    fig.update_layout(xaxis_title='Date',
+                      yaxis_title='Cumulative Returns',
+                      xaxis=dict(tickformat='%Y-%m-%d'),
+                      template="plotly_dark",
+                      plot_bgcolor='rgba(0,0,0,0)',
+                      paper_bgcolor='rgba(0,0,0,0)',
+                      font_color="white"
+    )
     return fig
 
 
@@ -307,6 +345,15 @@ def update_monthly_statistics(selected_date):
         aspect="auto")
 
     fig.update_xaxes(side="top")
+    fig.update_layout(
+        title=f"Monthly Returns for {selected_month.strftime('%B %Y')}",
+        xaxis_title='Stock',
+        yaxis_title='Metric',
+        template="plotly_dark",
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color="white"
+    )
 
 
     
@@ -352,8 +399,14 @@ def update_weightings_graph(selected_date):
     yaxis=dict(tickformat='.0%'),
     autosize=True,
     margin=dict(l=50, r=50, t=50, b=100),  # Adjust margins to ensure labels fit
-    xaxis_tickangle=-45
+    xaxis_tickangle=-45,
+    template="plotly_dark",
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    font_color="white"
+    
 )
+    
 
     
     return fig
