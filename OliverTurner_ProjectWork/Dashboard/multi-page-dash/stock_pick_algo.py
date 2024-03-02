@@ -77,7 +77,7 @@ def return_stocks(max=500):
         filtered_data.to_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/stock_info.csv')
 
         #update last_updated.json
-        with open('stock_info_last_updated.json', 'w') as f:
+        with open('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/stock_info_last_updated.json', 'w') as f:
             json.dump({'last_updated': today}, f)
         
         print('Data updated and saved to stock_info.csv')

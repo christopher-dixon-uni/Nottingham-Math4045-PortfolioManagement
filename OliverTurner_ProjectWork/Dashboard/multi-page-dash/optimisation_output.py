@@ -43,6 +43,10 @@ def return_assets_weights():
         adj_close_df = pd.concat([yf.download(ticker, start=start_date, end=end_date)['Adj Close'] for ticker in tickers], axis=1, keys=tickers)
         #save to csv
         adj_close_df.to_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/adj_close_df.csv')
+        #update json
+        with open('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/adj_close_df.json', 'w') as f:
+            json.dump({'last_updated': today}, f)
+            print('Updated last_updated.json')
 
     adj_close_df = pd.read_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/adj_close_df.csv', index_col=0)
     

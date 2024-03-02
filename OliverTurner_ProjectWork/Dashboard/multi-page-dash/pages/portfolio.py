@@ -170,7 +170,7 @@ if __name__ == "__main__":
 treemap_fig = px.treemap(sector_weights_df,
                          path=[px.Constant("Portfolio"), 'sector', 'ticker'],
                          values='optimal_weights',
-                         title='Portfolio Weightings by Sector and Stock',
+                         title='Current Portfolio Weightings by Sector and Stock',
                          color='optimal_weights',
                          hover_data={
                             'ticker': True,
@@ -212,6 +212,7 @@ layout = dbc.Container([
     #date range
     dbc.Row([
         dbc.Col(html.H2("Overall Returns", className="text-center"), width=12),
+
         dbc.Col([
             html.Div("Select Date Range:", className="mb-2"),
             dcc.DatePickerRange(
