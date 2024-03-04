@@ -10,6 +10,7 @@ from dash import dash_table
 import plotly.graph_objects as go
 from optimisation_output import return_assets_weights
 import warnings
+
 #styles
 negative_style = {"color": "#ff0000"} #red
 positive_style = {"color": "#00ff00"} #green
