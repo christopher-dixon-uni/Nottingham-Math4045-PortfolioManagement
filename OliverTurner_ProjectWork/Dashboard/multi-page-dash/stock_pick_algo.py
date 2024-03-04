@@ -71,8 +71,8 @@ def return_stocks(max=500):
         data.insert(0, 'ticker', data.pop('ticker'))
 
         #filter data
-        filtered_data = data[(data['marketCap'] > 20000000000) & (data['forwardPE'] < 20) & (data['priceToBook'] > 1) & (data['dividendYield'] > 0.025)]
-
+        filtered_data = data[(data['marketCap'] > 2e10) & (data['forwardPE'] < 20) & (data['priceToBook'] > 1) & (data['dividendYield'] > 0.025)]
+            
         #save filtered data df to csv
         filtered_data.to_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/stock_info.csv')
 
@@ -88,4 +88,4 @@ def return_stocks(max=500):
     return filtered_data
 
 if __name__ == "__main__":
-    return_stocks(max=5).head()
+    print(list(return_stocks(max=500)['ticker']))
