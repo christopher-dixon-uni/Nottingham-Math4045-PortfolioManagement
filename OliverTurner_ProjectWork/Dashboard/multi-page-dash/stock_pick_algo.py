@@ -37,11 +37,7 @@ def return_stocks(max=500):
         with open('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/stock_info_last_updated.json', 'w') as f:
             json.dump({'last_updated': today}, f)
             print('Created last_updated.json')
-        
-        
-
-
-
+            
     if updated == False:
         print('Data not updated today, updating...')
         print('Updating may take some time.')
