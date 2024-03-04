@@ -7,18 +7,20 @@ from datetime import datetime, timedelta
 from stock_pick_algo import return_stocks
 import datetime as dt
 import json
+from GB_Lin_ExpRetn import get_exp_returns
 
 today = dt.date.today().strftime('%Y-%m-%d')
 
 
 def return_assets_weights():
+    
     # Section 1: Define Tickers and Time Range
     stock_info = return_stocks(max=500)
 
     stock_list = list(stock_info['ticker'])
     tickers = stock_list
-    end_date = datetime.today()
-    start_date = end_date - timedelta(days=5*365)
+    end_date = datetime.today() # today's date
+    start_date = end_date - timedelta(days=5*365) # 5 years ago
 
     # Section 2: Download Adjusted Close Prices
         #check if data has been updated today
@@ -59,7 +61,7 @@ def return_assets_weights():
 
     # Section 5: Define Portfolio Performance Metrics
     def standard_deviation(weights): return np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-    def expected_return(weights): return np.sum(log_returns.mean() * weights) * 252
+    def expected_return(weights): return np.dot(get_exp_returns(stock_list), weights) 
     def sharpe_ratio(weights, risk_free_rate=0.02): return (expected_return(weights) - risk_free_rate) / standard_deviation(weights)
 
     # Section 6: Portfolio Optimization with Minimum Weight Constraint
