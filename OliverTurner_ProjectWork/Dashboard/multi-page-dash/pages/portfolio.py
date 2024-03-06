@@ -10,6 +10,9 @@ from dash import dash_table
 import plotly.graph_objects as go
 from optimisation_output import return_assets_weights
 import warnings
+import yfinance as yf
+from datetime import datetime, timedelta
+
 
 #styles
 negative_style = {"color": "#ff0000"} #red
@@ -72,97 +75,126 @@ df['date'] = pd.to_datetime(df['date'])
 min_date = df['date'].min()
 max_date = df['date'].max()
 
+def calculate_return(data, days):
+    end_price = data['Adj Close'].iloc[-1]  # Get the most recent closing price
+    start_price = data['Adj Close'].iloc[-days]  # Get the closing price 'days' ago
+    return (end_price - start_price) / start_price * 100  # Return percentage
 
-#summary stats colummn
 
-indicators_ptf = go.Figure()
-indicators_ptf.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 0.15,
-    number = {'suffix': " %"},
-    title = {"text": "<br><span style='font-size:0.7em;color:gray'>7 Days</span>"},
-    delta = {'position': "bottom", 'reference': 0.2, 'relative': False},
-    domain = {'row': 0, 'column': 0}))
+def get_stock_data(start_date, end_date = datetime.now(), ticker_symbol= 'SPY'):
+   #get s&p 500 performance data
+    # Define the ticker symbol for the S&P 500 ETF (SPY)
 
-indicators_ptf.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 0.2,
-    number = {'suffix': " %"},
-    title = {"text": "<span style='font-size:0.7em;color:gray'>15 Days</span>"},
-    delta = {'position': "bottom", 'reference': 0.25, 'relative': False},
-    domain = {'row': 1, 'column': 0}))
+    # Download the data
+    data = yf.download(ticker_symbol, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
 
-indicators_ptf.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 0.3,
-    number = {'suffix': " %"},
-    title = {"text": "<span style='font-size:0.7em;color:gray'>30 Days</span>"},
-    delta = {'position': "bottom", 'reference': 0.25, 'relative': False},
-    domain = {'row': 2, 'column': 0}))
+    returns_7_days = calculate_return(data, 7)
+    returns_15_days = calculate_return(data, 15)
+    returns_30_days = calculate_return(data, 30)
+    returns_200_days = calculate_return(data, 200)
 
-indicators_ptf.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 2,
-    number = {'suffix': " %"},
-    title = {"text": "<span style='font-size:0.7em;color:gray'>200 Days</span>"},
-    delta = {'position': "bottom", 'reference': 1.5, 'relative': False},
-    domain = {'row': 3, 'column': 1}))
+    return returns_7_days, returns_15_days, returns_30_days, returns_200_days, data
 
-indicators_ptf.update_layout(
-    grid = {'rows': 4, 'columns': 1, 'pattern': "independent"},
-    margin=dict(l=50, r=50, t=30, b=30),
-    template="plotly_dark",
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    font_color="white"
-    
-)
+returns_7_days, returns_15_days, returns_30_days, returns_200_days, sp500_data = get_stock_data(min_date)
 
-indicators_sp500 = go.Figure()
-indicators_sp500.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 0.2,
-    number = {'suffix': " %"},
-    title = {"text": "<br><span style='font-size:0.7em;color:gray'>7 Days</span>"},
-    domain = {'row': 0, 'column': 0}))
+sp500_data['cumulative_return'] = (1 + sp500_data['Close'].pct_change()).cumprod() - 1
 
-indicators_sp500.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 0.25,
-    number = {'suffix': " %"},
-    title = {"text": "<span style='font-size:0.7em;color:gray'>15 Days</span>"},
-    domain = {'row': 1, 'column': 0}))
+def sumamry_stats_columns():
+    #Portfolio stats colummn
 
-indicators_sp500.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 0.25,
-    number = {'suffix': " %"},
-    title = {"text": "<span style='font-size:0.7em;color:gray'>30 Days</span>"},
-    domain = {'row': 2, 'column': 0}))
+    indicators_ptf = go.Figure()
+    indicators_ptf.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = 0.15,
+        number = {'suffix': " %"},
+        title = {"text": "<br><span style='font-size:0.7em;color:gray'>7 Days</span>"},
+        delta = {'position': "bottom", 'reference': returns_7_days, 'relative': False},
+        domain = {'row': 0, 'column': 0}))
 
-indicators_sp500.add_trace(go.Indicator(
-    mode = "number+delta",
-    value = 1.5,
-    number = {'suffix': " %"},
-    title = {"text": "<span style='font-size:0.7em;color:gray'>200 Days</span>"},
-    domain = {'row': 3, 'column': 1}))
+    indicators_ptf.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = 0.2,
+        number = {'suffix': " %"},
+        title = {"text": "<span style='font-size:0.7em;color:gray'>15 Days</span>"},
+        delta = {'position': "bottom", 'reference': returns_15_days, 'relative': False},
+        domain = {'row': 1, 'column': 0}))
 
-indicators_sp500.update_layout(
-    grid = {'rows': 4, 'columns': 1, 'pattern': "independent"},
-    margin=dict(l=50, r=50, t=30, b=30),
-    template="plotly_dark",
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    font_color="white"
+    indicators_ptf.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = 0.3,
+        number = {'suffix': " %"},
+        title = {"text": "<span style='font-size:0.7em;color:gray'>30 Days</span>"},
+        delta = {'position': "bottom", 'reference': returns_30_days, 'relative': False},
+        domain = {'row': 2, 'column': 0}))
 
-)
+    indicators_ptf.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = 2,
+        number = {'suffix': " %"},
+        title = {"text": "<span style='font-size:0.7em;color:gray'>200 Days</span>"},
+        delta = {'position': "bottom", 'reference': returns_200_days, 'relative': False},
+        domain = {'row': 3, 'column': 1}))
 
+    indicators_ptf.update_layout(
+        grid = {'rows': 4, 'columns': 1, 'pattern': "independent"},
+        margin=dict(l=50, r=50, t=30, b=30),
+        template="plotly_dark",
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color="white"
+        
+    )
+
+    #s&P500 stats column
+
+    indicators_sp500 = go.Figure()
+    indicators_sp500.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = returns_7_days,
+        number = {'suffix': " %"},
+        title = {"text": "<br><span style='font-size:0.7em;color:gray'>7 Days</span>"},
+        domain = {'row': 0, 'column': 0}))
+
+    indicators_sp500.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = returns_15_days,
+        number = {'suffix': " %"},
+        title = {"text": "<span style='font-size:0.7em;color:gray'>15 Days</span>"},
+        domain = {'row': 1, 'column': 0}))
+
+    indicators_sp500.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = returns_30_days,
+        number = {'suffix': " %"},
+        title = {"text": "<span style='font-size:0.7em;color:gray'>30 Days</span>"},
+        domain = {'row': 2, 'column': 0}))
+
+    indicators_sp500.add_trace(go.Indicator(
+        mode = "number+delta",
+        value = returns_200_days,
+        number = {'suffix': " %"},
+        title = {"text": "<span style='font-size:0.7em;color:gray'>200 Days</span>"},
+        domain = {'row': 3, 'column': 1}))
+
+    indicators_sp500.update_layout(
+        grid = {'rows': 4, 'columns': 1, 'pattern': "independent"},
+        margin=dict(l=50, r=50, t=30, b=30),
+        template="plotly_dark",
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color="white"
+
+    )
+    return indicators_ptf, indicators_sp500
+
+indicators_ptf, indicators_sp500 = sumamry_stats_columns()
 
 
 #treemap
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     sector_weights_df = return_assets_weights()
+print('pages/portfolio.py: asset weights returned')
 
 if __name__ == "__main__":
     print(sector_weights_df)
@@ -292,15 +324,14 @@ def update_returns_graph(start_date, end_date):
     filtered_df = df.loc[mask]
     
     # Plotting the cumulative returns against the date
-    fig = px.line(
-        filtered_df,
-        x='date',
-        y='cumulative_return',
-        title='Cumulative Returns Over Time',
-        labels={'cumulative_returns': 'Cumulative Returns', 'date': 'Date'},
-        height=700
-    )
+    fig = go.Figure()
+    fig.add_scatter(x=filtered_df['date'], y=filtered_df['cumulative_return'], mode='lines', name='Portfolio', line=dict(color='blue', width=2))
+
+
+    #add s&p500 cumulative returns
+    fig.add_scatter(x=sp500_data.index, y=sp500_data['cumulative_return'], mode='lines', name='S&P500', line=dict(color='green', width=2))
     
+
     fig.update_layout(xaxis_title='Date',
                       yaxis_title='Cumulative Returns',
                       xaxis=dict(tickformat='%Y-%m-%d'),
