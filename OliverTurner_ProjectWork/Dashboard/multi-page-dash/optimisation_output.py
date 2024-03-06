@@ -58,6 +58,7 @@ def return_assets_weights():
 
     # Section 4: Calculate Covariance Matrix
     cov_matrix = log_returns.cov() * 252
+    
 
     # Section 5: Define Portfolio Performance Metrics
     def standard_deviation(weights): return np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
