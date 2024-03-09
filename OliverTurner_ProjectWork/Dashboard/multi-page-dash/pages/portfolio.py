@@ -12,6 +12,7 @@ from optimisation_output import return_assets_weights
 import warnings
 import yfinance as yf
 from datetime import datetime, timedelta
+from optimise_get_returns import plot_returns
 
 
 #styles
@@ -22,58 +23,12 @@ positive_style = {"color": "#00ff00"} #green
 
 
 # Sample data: stocks and their weightings
-dates = pd.date_range(start='2017-01-01', periods=60, freq='ME')
+dates = pd.date_range(start='2023-01-01', periods=12, freq='M', )
 
-AAPL_weight_initial = 0.5 + 0.05 * np.sin(np.arange(len(dates)))
-MSFT_weight_initial = np.random.rand(len(dates))
-GOOGL_weight_initial = np.random.rand(len(dates))
-AMZN_weight_initial = np.random.rand(len(dates))
-
-# Stack the initial weights
-weights_stack = np.vstack((AAPL_weight_initial, MSFT_weight_initial, GOOGL_weight_initial, AMZN_weight_initial))
-
-# Normalize the weights so they sum to 1 for each period
-weights_normalized = weights_stack / weights_stack.sum(axis=0)
-
-# Assign the normalized weights to variables
-AAPL_weight = weights_normalized[0]
-MSFT_weight = weights_normalized[1]
-GOOGL_weight = weights_normalized[2]
-AMZN_weight = weights_normalized[3]
-
-# Generate returns that fluctuate within a reasonable range
-np.random.seed(42)  # For reproducibility
-AAPL_returns = 0.02 + 0.05 * np.random.randn(len(dates))  # Mean return of 2% with some volatility
-MSFT_returns = 0.03 + 0.04 * np.random.randn(len(dates))  # Mean return of 3% with some volatility
-GOOG_returns = 0.04 + 0.03 * np.random.randn(len(dates))  # Mean return of 4% with some volatility
-AMZN_returns = 0.05 + 0.02 * np.random.randn(len(dates))  # Mean return of 5% with some volatility
-# Create the DataFrame
-stocks_data = {
-    'date': dates,
-    'AAPL_weight': weights_normalized[0],
-    'MSFT_weight': weights_normalized[1],
-    'GOOG_weight': weights_normalized[2],
-    'AMZN_weight': weights_normalized[3],
-    'AAPL_returns': AAPL_returns,
-    'MSFT_returns': MSFT_returns,
-    'GOOG_returns': GOOG_returns,
-    'AMZN_returns': AMZN_returns
-}
-
-df = pd.DataFrame(stocks_data)
-
-#returns calc
-df['monthly_return'] = df['AAPL_returns'] * df['AAPL_weight'] + df['MSFT_returns'] * df['MSFT_weight']
-df['cumulative_return'] = (1 + df['monthly_return']).cumprod() - 1
-
-
-
-#date formatting
-df['date'] = pd.to_datetime(df['date'])
 
 #start and end dates
-min_date = df['date'].min()
-max_date = df['date'].max()
+min_date = dates.min()
+max_date = dates.max()
 
 def calculate_return(data, days):
     end_price = data['Adj Close'].iloc[-1]  # Get the most recent closing price
@@ -81,7 +36,7 @@ def calculate_return(data, days):
     return (end_price - start_price) / start_price * 100  # Return percentage
 
 
-def get_stock_data(start_date, end_date = datetime.now(), ticker_symbol= 'SPY'):
+def get_stock_data(start_date, end_date, ticker_symbol= 'SPY'):
    #get s&p 500 performance data
     # Define the ticker symbol for the S&P 500 ETF (SPY)
 
@@ -95,7 +50,7 @@ def get_stock_data(start_date, end_date = datetime.now(), ticker_symbol= 'SPY'):
 
     return returns_7_days, returns_15_days, returns_30_days, returns_200_days, data
 
-returns_7_days, returns_15_days, returns_30_days, returns_200_days, sp500_data = get_stock_data(min_date)
+returns_7_days, returns_15_days, returns_30_days, returns_200_days, sp500_data = get_stock_data(min_date, end_date=max_date)
 
 sp500_data['cumulative_return'] = (1 + sp500_data['Close'].pct_change()).cumprod() - 1
 
@@ -235,6 +190,21 @@ treemap_graph_component = dcc.Graph(
 )
 
 
+#overall returns graph
+overall_returns_graph = plot_returns(pd.read_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/2023_returns.csv'))
+#add s&p500 cumulative returns
+overall_returns_graph.add_scatter(x=sp500_data.index, y=sp500_data['cumulative_return'], mode='lines', name='S&P500', line=dict(color='green', width=2))
+
+
+overall_returns_graph.update_layout(xaxis_title='Date',
+                    yaxis_title='Cumulative Returns',
+                    xaxis=dict(tickformat='%Y-%m-%d'),
+                    template="plotly_dark",
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color="white")
+
+
 # Define the layout for this page
 layout = dbc.Container([
     #Title
@@ -246,19 +216,8 @@ layout = dbc.Container([
     dbc.Row([
         dbc.Col(html.H2("Overall Returns", className="text-center"), width=12),
 
-        dbc.Col([
-            html.Div("Select Date Range:", className="mb-2"),
-            dcc.DatePickerRange(
-                id='date-picker-range',
-                start_date=min_date,
-                end_date=max_date,
-                display_format='YYYY-MM-DD',  # Display format of the date
-                className="mb-3"
-            ),
-    ], md=6),
-
     #cumulative return graoh
-    dbc.Col(dcc.Graph(id='overall-returns-graph'), width={'size': 8, 'offset': 0, 'order': 1}),
+    dbc.Col(dcc.Graph(id='overall-returns-graph', figure = overall_returns_graph), width={'size': 8, 'offset': 0, 'order': 1}),
 
 
     dbc.Col([  # second column on second row
@@ -284,33 +243,12 @@ layout = dbc.Container([
     ]), #className="rounded-box")
 
 
-
-    #Single Month
-    dbc.Row([
-        dbc.Col(html.H2("Monthly Statistics", className="text-center"), width=12),
-        dbc.Col([
-            html.Div("Select Month:", className="mb-2"),
-            dcc.DatePickerSingle(
-                id='date-picker-single',
-                min_date_allowed=min_date,
-                max_date_allowed=max_date,
-                initial_visible_month=min_date,
-                date=max_date,
-                display_format='YYYY-MM-DD'
-            ),
-
-    ], md=6),
-
-    dcc.Graph(id="monthly-returns-graph"),
-    dcc.Graph(id="monthly-weights-graph"),
-
-    ]), #className="rounded-box")
-
 ], fluid=True)
 
 
 
 # Callback to update page
+'''
 @app.callback(
     Output('overall-returns-graph', 'figure'),
     [
@@ -341,7 +279,7 @@ def update_returns_graph(start_date, end_date):
                       font_color="white"
     )
     return fig
-
+'''
 
 @app.callback(
     Output('monthly-returns-graph', 'figure'),
@@ -391,7 +329,7 @@ def update_monthly_statistics(selected_date):
 
     
     return fig
-
+'''
 @app.callback(
     Output('monthly-weights-graph', 'figure'),
     [Input('date-picker-single', 'date')]
@@ -444,3 +382,4 @@ def update_weightings_graph(selected_date):
     
     return fig
 
+'''

@@ -27,7 +27,7 @@ def return_stocks(max=500):
         with open('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/stock_info_last_updated.json', 'r') as f:
             last_updated = json.load(f)
             if last_updated['last_updated'] == today:
-                print('stock_pick_algo.py: filtered Stock info already updated today, returning...')
+                print('Data already updated today, returning...')
                 updated = True
             else:
                 updated = False
@@ -63,7 +63,7 @@ def return_stocks(max=500):
                 data = pd.concat([data, df.iloc[[0]]], ignore_index=True)        
             except:
                 pass
-
+ 
         data.insert(0, 'ticker', data.pop('ticker'))
 
         #filter data
@@ -76,7 +76,7 @@ def return_stocks(max=500):
         with open('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/stock_info_last_updated.json', 'w') as f:
             json.dump({'last_updated': today}, f)
         
-        print('stock_pick_algo.py: filtered Stock info updated and saved to stock_info.csv')
+        print('Data updated and saved to stock_info.csv')
     
     
     filtered_data = pd.read_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/stock_info.csv')
