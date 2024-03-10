@@ -53,20 +53,17 @@ def fetch_sector_etf_data():
 
 # function to generate forecast plot
 def generate_forecast_plot(ticker, parameters):
-    # fetch historical price data
     data = yf.Ticker(ticker)
     prices = data.history(start=start, end=today).Close
     #prices = data.history(start=start, end=today, interval="1mo").Close
 
-    # fit ARIMA model
     model = ARIMA(prices, order=parameters)
     model_fit = model.fit()
 
-    # forecast future values
     forecast_horizon = 8
     forecast = model_fit.forecast(steps=forecast_horizon)
 
-    # generate dates for the forecast period
+    # dates for the forecast period
     last_date = prices.index[-1]
     forecast_dates = pd.date_range(start=last_date + timedelta(days=0), periods=forecast_horizon)
     #forecast_dates = pd.date_range(start=last_date + timedelta(days=1), periods=forecast_horizon, freq='MS')
