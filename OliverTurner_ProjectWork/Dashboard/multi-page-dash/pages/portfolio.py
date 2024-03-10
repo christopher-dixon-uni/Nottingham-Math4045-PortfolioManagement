@@ -12,7 +12,8 @@ from optimisation_output import return_assets_weights
 import warnings
 import yfinance as yf
 from datetime import datetime, timedelta
-from optimise_get_returns import plot_returns
+import optimise_get_returns as opt
+import dash_daq as daq
 
 
 #styles
@@ -23,7 +24,7 @@ positive_style = {"color": "#00ff00"} #green
 
 
 # Sample data: stocks and their weightings
-dates = pd.date_range(start='2023-01-01', periods=12, freq='M', )
+dates = pd.date_range(start='2022-12-01', periods=13, freq='M', )
 
 
 #start and end dates
@@ -31,28 +32,40 @@ min_date = dates.min()
 max_date = dates.max()
 
 def calculate_return(data, days):
-    end_price = data['Adj Close'].iloc[-1]  # Get the most recent closing price
-    start_price = data['Adj Close'].iloc[-days]  # Get the closing price 'days' ago
-    return (end_price - start_price) / start_price * 100  # Return percentage
+    data['cumulative_return'] = (1 + data['Adj Close'].pct_change()).cumprod() - 1
+
+    return data['cumulative_return'].iloc[days]
 
 
-def get_stock_data(start_date, end_date, ticker_symbol= 'SPY'):
+def get_stock_data(start_date, end_date, data=None):
    #get s&p 500 performance data
     # Define the ticker symbol for the S&P 500 ETF (SPY)
 
     # Download the data
-    data = yf.download(ticker_symbol, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
+    if data is None:
+        data = yf.download('SPY', start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
+        
 
-    returns_7_days = calculate_return(data, 7)
-    returns_15_days = calculate_return(data, 15)
-    returns_30_days = calculate_return(data, 30)
-    returns_200_days = calculate_return(data, 200)
+    returns_7_days = calculate_return(data, 7)*100
+    returns_15_days = calculate_return(data, 15)*100
+    returns_30_days = calculate_return(data, 30)*100
+    returns_200_days = calculate_return(data, 200)*100
 
     return returns_7_days, returns_15_days, returns_30_days, returns_200_days, data
 
-returns_7_days, returns_15_days, returns_30_days, returns_200_days, sp500_data = get_stock_data(min_date, end_date=max_date)
+spReturns_7_days, spReturns_15_days, spReturns_30_days, spReturns_200_days, sp500_data = get_stock_data(min_date, end_date=max_date)
+
+data = pd.read_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/2023_returns.csv')
+#calculate 7, 15, 30, 200 day returns in portfolio using cumulative returns column
+#add 4 days on as the first 4 days are NaN
+portReturns_7_days = (data['Portfolio Cumulative Returns'].iloc[11])*100
+portReturns_15_days = (data['Portfolio Cumulative Returns'].iloc[19])*100
+portReturns_30_days = (data['Portfolio Cumulative Returns'].iloc[34])*100
+portReturns_200_days = (data['Portfolio Cumulative Returns'].iloc[204])*100
+
 
 sp500_data['cumulative_return'] = (1 + sp500_data['Close'].pct_change()).cumprod() - 1
+
 
 def sumamry_stats_columns():
     #Portfolio stats colummn
@@ -60,34 +73,34 @@ def sumamry_stats_columns():
     indicators_ptf = go.Figure()
     indicators_ptf.add_trace(go.Indicator(
         mode = "number+delta",
-        value = 0.15,
+        value = portReturns_7_days,
         number = {'suffix': " %"},
         title = {"text": "<br><span style='font-size:0.7em;color:gray'>7 Days</span>"},
-        delta = {'position': "bottom", 'reference': returns_7_days, 'relative': False},
+        delta = {'position': "bottom", 'reference': spReturns_7_days, 'relative': False},
         domain = {'row': 0, 'column': 0}))
 
     indicators_ptf.add_trace(go.Indicator(
         mode = "number+delta",
-        value = 0.2,
+        value = portReturns_15_days,
         number = {'suffix': " %"},
         title = {"text": "<span style='font-size:0.7em;color:gray'>15 Days</span>"},
-        delta = {'position': "bottom", 'reference': returns_15_days, 'relative': False},
+        delta = {'position': "bottom", 'reference': spReturns_15_days, 'relative': False},
         domain = {'row': 1, 'column': 0}))
 
     indicators_ptf.add_trace(go.Indicator(
         mode = "number+delta",
-        value = 0.3,
+        value = portReturns_30_days,
         number = {'suffix': " %"},
         title = {"text": "<span style='font-size:0.7em;color:gray'>30 Days</span>"},
-        delta = {'position': "bottom", 'reference': returns_30_days, 'relative': False},
+        delta = {'position': "bottom", 'reference': spReturns_30_days, 'relative': False},
         domain = {'row': 2, 'column': 0}))
 
     indicators_ptf.add_trace(go.Indicator(
         mode = "number+delta",
-        value = 2,
+        value = portReturns_200_days,
         number = {'suffix': " %"},
         title = {"text": "<span style='font-size:0.7em;color:gray'>200 Days</span>"},
-        delta = {'position': "bottom", 'reference': returns_200_days, 'relative': False},
+        delta = {'position': "bottom", 'reference': spReturns_200_days, 'relative': False},
         domain = {'row': 3, 'column': 1}))
 
     indicators_ptf.update_layout(
@@ -105,28 +118,28 @@ def sumamry_stats_columns():
     indicators_sp500 = go.Figure()
     indicators_sp500.add_trace(go.Indicator(
         mode = "number+delta",
-        value = returns_7_days,
+        value = spReturns_7_days,
         number = {'suffix': " %"},
         title = {"text": "<br><span style='font-size:0.7em;color:gray'>7 Days</span>"},
         domain = {'row': 0, 'column': 0}))
 
     indicators_sp500.add_trace(go.Indicator(
         mode = "number+delta",
-        value = returns_15_days,
+        value = spReturns_15_days,
         number = {'suffix': " %"},
         title = {"text": "<span style='font-size:0.7em;color:gray'>15 Days</span>"},
         domain = {'row': 1, 'column': 0}))
 
     indicators_sp500.add_trace(go.Indicator(
         mode = "number+delta",
-        value = returns_30_days,
+        value = spReturns_30_days,
         number = {'suffix': " %"},
         title = {"text": "<span style='font-size:0.7em;color:gray'>30 Days</span>"},
         domain = {'row': 2, 'column': 0}))
 
     indicators_sp500.add_trace(go.Indicator(
         mode = "number+delta",
-        value = returns_200_days,
+        value = spReturns_200_days,
         number = {'suffix': " %"},
         title = {"text": "<span style='font-size:0.7em;color:gray'>200 Days</span>"},
         domain = {'row': 3, 'column': 1}))
@@ -148,25 +161,27 @@ indicators_ptf, indicators_sp500 = sumamry_stats_columns()
 #treemap
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    sector_weights_df = return_assets_weights()
+    sector_weights_df = opt.get_recent_weights_sectors()
 print('pages/portfolio.py: asset weights returned')
 
 if __name__ == "__main__":
     print(sector_weights_df)
 
+#treemap cannot work for negative weights
+positive_sector_weights_df = sector_weights_df[sector_weights_df['Weight'] > 0]
 
-treemap_fig = px.treemap(sector_weights_df,
-                         path=[px.Constant("Portfolio"), 'sector', 'ticker'],
-                         values='optimal_weights',
+treemap_fig = px.treemap(positive_sector_weights_df,
+                         path=[px.Constant("Portfolio"), 'Sector', 'Ticker'],
+                         values='Weight',
                          title='Current Portfolio Weightings by Sector and Stock',
-                         color='optimal_weights',
+                         color='Weight',
                          hover_data={
-                            'ticker': True,
-                            'longName': True,
-                            'sector': True,
-                            'optimal_weights': ':.2%'  
+                            'Ticker': True,
+                            'Long Name': True,
+                            'Sector': True,
+                            'Weight': ':.2%'  
                          }, 
-                         color_continuous_scale='RdBu')
+                         color_continuous_scale='Algae')
 
 treemap_fig.update_traces(textinfo='label+percent parent',
                   textfont=dict(color='white', size=26))
@@ -190,8 +205,9 @@ treemap_graph_component = dcc.Graph(
 )
 
 
+
 #overall returns graph
-overall_returns_graph = plot_returns(pd.read_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/2023_returns.csv'))
+overall_returns_graph = opt.plot_returns(pd.read_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/2023_returns.csv'))
 #add s&p500 cumulative returns
 overall_returns_graph.add_scatter(x=sp500_data.index, y=sp500_data['cumulative_return'], mode='lines', name='S&P500', line=dict(color='green', width=2))
 
@@ -204,83 +220,42 @@ overall_returns_graph.update_layout(xaxis_title='Date',
                     paper_bgcolor='rgba(0,0,0,0)',
                     font_color="white")
 
+efficient_frontier_fig = opt.plot_efficient_frontier()
 
 # Define the layout for this page
 layout = dbc.Container([
-    #Title
+    # Title
     dbc.Row([
         dbc.Col(html.H1("Portfolio", className="text-center"), width=12),
-    ]), #className="rounded-box")
-
-    #date range
+        dbc.Col(treemap_graph_component,width=12,)
+    ]),
+    # Date range
     dbc.Row([
         dbc.Col(html.H2("Overall Returns", className="text-center"), width=12),
-
-    #cumulative return graoh
-    dbc.Col(dcc.Graph(id='overall-returns-graph', figure = overall_returns_graph), width={'size': 8, 'offset': 0, 'order': 1}),
-
-
-    dbc.Col([  # second column on second row
-            html.H5('Portfolio', className='text-center'),
-            dcc.Graph(id='indicators-ptf',
-                      figure=indicators_ptf,
-                      style={'height':550}),
-            html.Hr()
-            ], width={'size': 2, 'offset': 0, 'order': 2}),  # width second column on second row
-            dbc.Col([  # third column on second row
-            html.H5('S&P500', className='text-center'),
-            dcc.Graph(id='indicators-sp',
-                      figure=indicators_sp500,
-                      style={'height':550}),
-            html.Hr()
-            ], width={'size': 2, 'offset': 0, 'order': 3}),
-            
-    dbc.Col(
-    treemap_graph_component,
-    width=12,
-    )   
+        dbc.Col(dcc.Graph(id='overall-returns-graph', figure=overall_returns_graph), width={'size': 8, 'offset': 0, 'order': 1}),
+        dbc.Col([  # second column on second row
+                html.H5('Portfolio', className='text-center'),
+                dcc.Graph(id='indicators-ptf',
+                        figure=indicators_ptf,
+                        style={'height':550}),
+                html.Hr()
+                ], width={'size': 2, 'offset': 0, 'order': 2}),  # width second column on second row
+                dbc.Col([  # third column on second row
+                html.H5('S&P500', className='text-center'),
+                dcc.Graph(id='indicators-sp',
+                        figure=indicators_sp500,
+                        style={'height':550}),
+                html.Hr()
+                ], width={'size': 2, 'offset': 0, 'order': 3}),
+    ]),
+    dbc.Row([dcc.Graph(id='efficient-frontier-graph', figure = efficient_frontier_fig),]),
     
-    ]), #className="rounded-box")
-
-
 ], fluid=True)
 
 
 
-# Callback to update page
+
 '''
-@app.callback(
-    Output('overall-returns-graph', 'figure'),
-    [
-     Input('date-picker-range', 'start_date'),
-     Input('date-picker-range', 'end_date')]
-)
-def update_returns_graph(start_date, end_date):
-    
-    # Filter based on selected date range
-    mask = (df['date'] >= start_date) & (df['date'] <= end_date)
-    filtered_df = df.loc[mask]
-    
-    # Plotting the cumulative returns against the date
-    fig = go.Figure()
-    fig.add_scatter(x=filtered_df['date'], y=filtered_df['cumulative_return'], mode='lines', name='Portfolio', line=dict(color='blue', width=2))
-
-
-    #add s&p500 cumulative returns
-    fig.add_scatter(x=sp500_data.index, y=sp500_data['cumulative_return'], mode='lines', name='S&P500', line=dict(color='green', width=2))
-    
-
-    fig.update_layout(xaxis_title='Date',
-                      yaxis_title='Cumulative Returns',
-                      xaxis=dict(tickformat='%Y-%m-%d'),
-                      template="plotly_dark",
-                      plot_bgcolor='rgba(0,0,0,0)',
-                      paper_bgcolor='rgba(0,0,0,0)',
-                      font_color="white"
-    )
-    return fig
-'''
-
 @app.callback(
     Output('monthly-returns-graph', 'figure'),
     [Input('date-picker-single', 'date')]
@@ -329,7 +304,7 @@ def update_monthly_statistics(selected_date):
 
     
     return fig
-'''
+
 @app.callback(
     Output('monthly-weights-graph', 'figure'),
     [Input('date-picker-single', 'date')]

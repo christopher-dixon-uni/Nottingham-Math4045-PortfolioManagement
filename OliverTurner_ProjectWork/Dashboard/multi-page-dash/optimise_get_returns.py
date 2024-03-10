@@ -6,6 +6,8 @@ import plotly.express as px
 import datetime as dt
 import json
 import os
+import pickle
+
 
 '''
 
@@ -140,9 +142,20 @@ def get_weights(expected_returns, mu):
     temp_end_date = pd.to_datetime('today')
     temp_start_date = temp_end_date - pd.DateOffset(years=1)
 
+    #download dailyReturns as csv 
+    ##check if file exists
+    if os.path.exists('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/dailyReturns.pkl'):
+        dailyReturns = pd.read_pickle('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/dailyReturns.pkl')
 
-    dailyReturns = yf.download(sorted(tickers), start=temp_start_date, end=temp_end_date)
 
+        # Depending on the structure of your CSV, you may need to adjust this.
+    else:
+        dailyReturns = yf.download(sorted(tickers), start=temp_start_date, end=temp_end_date)
+        dailyReturns.to_pickle('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/dailyReturns.pkl')
+
+
+
+        
 
     returns = dailyReturns['Adj Close'].pct_change().dropna()
 
@@ -174,12 +187,10 @@ def get_weights(expected_returns, mu):
 
     epsilonMVE = lambda1*alpha*epsilonG + lambda2*beta*epsilonD
 
-    weights = {}
-    for key in tickers:
-        for value in epsilonMVE:
-            weights[key] = value
+    weights = {ticker: weight for ticker, weight in zip(tickers, epsilonMVE)}
 
-    return weights
+
+    return weights, V, invV, alpha, beta, gamma, delta, lambda1, lambda2, epsilonG, epsilonD, epsilonMVE
 
 
 
@@ -189,23 +200,31 @@ def calculate_returns(asset_weights, start_date, end_date):
 
     weights = list(asset_weights.values())
     tickers = sorted(list(asset_weights.keys()))
-    print(f'tickers: {tickers}')
     #get historical returns of each stock
     df = yf.download(sorted(list(asset_weights.keys())), start=start_date, end=end_date)
 
     #flatten headers
     df.columns = ['_'.join(col).strip() for col in df.columns.values]
 
-    #calculate daily returns
+    daily_returns_list = []
+
     for ticker in tickers:
-        df[f'Daily Returns_{ticker}'] = df[f'Adj Close_{ticker}'].pct_change().dropna()
+        ticker_daily_returns = df[f'Adj Close_{ticker}'].pct_change().dropna()
+        daily_returns_list.append(ticker_daily_returns.rename(f'Daily Returns_{ticker}'))
+
+    # Concatenate all the daily returns into a single DataFrame
+    daily_returns_df = pd.concat(daily_returns_list, axis=1)
+
+
+    df=df.copy()
+    df = pd.concat([df, daily_returns_df], axis=1)
 
     portfolio_daily_returns = [weights[i]*df[f'Daily Returns_{tickers[i]}'] for i in range(len(tickers))]
     df['Portfolio Daily Returns'] = sum(portfolio_daily_returns)
     
 
     #Portfolio cumulative returns
-    df['Portfolio Cumulative Returns'] = (1 + df['Portfolio Daily Returns']).cumprod() - 1
+    #df['Portfolio Cumulative Returns'] = (1 + df['Portfolio Daily Returns']).cumprod() - 1
 
     return df
 
@@ -226,8 +245,9 @@ def plot_returns(returns_df):
     return fig
 
 
-def get_2023_returns():
+def get_2023_returns(mu):
     #quarterly start and end dates 2023
+    '''
     start_dates = ['2023-01-01', '2023-04-01', '2023-07-01', '2023-10-01']
     end_dates = ['2023-03-31', '2023-06-30', '2023-09-30', '2023-12-31']
 
@@ -236,7 +256,7 @@ def get_2023_returns():
         expected_returns = get_expected_returns(end_date)
 
         #get weights
-        weights = get_weights(expected_returns, 0.2)
+        weights, V, InvV, alpha, beta, gamma, delta, lambda1, lambda2, epsilonG, epsilonD, epsilonMVE = get_weights(expected_returns, mu)
 
         #calculate returns
         returns = calculate_returns(weights, start_dates[end_dates.index(end_date)], end_date)
@@ -249,7 +269,117 @@ def get_2023_returns():
     
     #save all_returns to csv
     all_returns.to_csv('./OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/2023_returns.csv')
+    return all_returns, weights, V, InvV, alpha, beta, gamma, delta, lambda1, lambda2, epsilonG, epsilonD, epsilonMVE
+'''
+    # Quarterly start and end dates for 2023
+    start_dates = ['2023-01-01', '2023-04-01', '2023-07-01', '2023-10-01']
+    end_dates = ['2023-03-31', '2023-06-30', '2023-09-30', '2023-12-31']
 
+    all_returns = pd.DataFrame()  # Initialize an empty dataframe
+
+    # Loop through each quarter to calculate returns
+    for start_date, end_date in zip(start_dates, end_dates):
+        expected_returns = get_expected_returns(end_date)
+        weights, V, InvV, alpha, beta, gamma, delta, lambda1, lambda2, epsilonG, epsilonD, epsilonMVE = get_weights(expected_returns, mu)
+        quarter_returns = calculate_returns(weights, start_date, end_date)
+        
+        # Concatenate the quarter's returns with the cumulative dataframe
+        all_returns = pd.concat([all_returns, quarter_returns])
+
+    # Ensure the index is sorted (if it's a datetime index)
+    all_returns.sort_index(inplace=True)
+
+    all_returns['Portfolio Daily Returns'] = all_returns['Portfolio Daily Returns'].fillna(0)
+
+
+    # Calculate cumulative returns on the concatenated dataframe
+    all_returns['Portfolio Cumulative Returns'] = (1 + all_returns['Portfolio Daily Returns']).cumprod() - 1
+
+    # Save all_returns to CSV
+    all_returns.to_csv('OliverTurner_ProjectWork/Dashboard/multi-page-dash/assets/2023_returns.csv')
+
+    return all_returns, weights, V, InvV, alpha, beta, gamma, delta, lambda1, lambda2, epsilonG, epsilonD, epsilonMVE
+
+def plot_efficient_frontier():
+
+    expected_returns = get_expected_returns('2023-12-31')
+    
+    (weights, V, invV, alpha, beta, gamma, delta, lambda1,
+     lambda2, epsilonG, epsilonD,
+     epsilonMVE)= get_weights(expected_returns, mu=0.10)
+
+
+    mu_range = np.linspace(-0.3, 0.3, 200)
+    
+    
+
+    ones = np.ones((len(list(expected_returns.keys())), 1))
+
+    # Arrays to hold standard deviations and expected returns
+    std_devs = []
+    exp_returns = []
+    
+    
+
+    for mu in mu_range:
+        lambda1 = (gamma - beta*mu) / delta
+        lambda2 = (alpha*mu - beta) / delta
+        epsilonG = (1 / alpha) * np.dot(ones.T, invV).flatten()
+        epsilonD = (1 / beta) * np.dot(invV, np.array(list(expected_returns.values()))).flatten()
+        epsilonMVE = lambda1*alpha*epsilonG + lambda2*beta*epsilonD    
+        portfolio_variance = np.dot(np.dot(epsilonMVE, V), epsilonMVE.T)
+        portfolio_std_dev = np.sqrt(portfolio_variance)
+        std_devs.append(portfolio_std_dev)
+        exp_returns.append(mu)
+
+
+    # Plotting the efficient frontier
+    efficient_frontier_fig = go.Figure()
+    efficient_frontier_fig.add_trace(go.Scatter(x=std_devs, y=exp_returns, mode='lines', name='Efficient Frontier'))
+
+    efficient_frontier_fig.update_layout(title='Efficient Frontier',
+                    xaxis_title='Standard Deviation (Risk)',
+                    yaxis_title='Expected Return',
+                    template="plotly_dark",
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color="white",
+                    showlegend=True)
+    
+    return efficient_frontier_fig
+
+
+def get_recent_weights_sectors():
+
+    weights, V, invV, alpha, beta, gamma, delta, lambda1, lambda2, epsilonG, epsilonD, epsilonMVE = get_weights(get_expected_returns('2023-12-31'), 0.10)
+
+    ticker_info = {}
+    for ticker in weights.keys():
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        # Attempt to fetch the sector and longName, default to 'Unknown' if not found
+        ticker_info[ticker] = {
+            'sector': info.get('sector', 'Unknown'),
+            'longName': info.get('longName', 'Unknown')
+        }
+
+    # Combine the weights, sector, and longName information
+    combined_data = []
+    for ticker, weight in weights.items():
+        info = ticker_info[ticker]
+        combined_data.append({
+            'Ticker': ticker,
+            'Weight': weight,
+            'Sector': info['sector'],
+            'Long Name': info['longName']
+        })
+
+    # Convert combined data to a DataFrame
+    df_combined = pd.DataFrame(combined_data)
+
+    return df_combined
+
+        
 
 '''    #get expected returns
     expected_returns = get_expected_returns('2023-01-01', '2024-01-01')
@@ -267,5 +397,4 @@ def get_2023_returns():
 
 
 if __name__ == "__main__":
-
-    get_2023_returns()
+    None
