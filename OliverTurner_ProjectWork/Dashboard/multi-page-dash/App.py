@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 from dash import html
 from pages.portfolio import portfolio_layout
 from pages.stock_analysis import analysis_layout
+from pages.optimisation import optimisation_layout
 
 pio.templates.default = "plotly_white"
 
@@ -17,24 +18,26 @@ server = app.server
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    html.Nav([
-        dcc.Link('Portfolio', href='/portfolio'),
-        html.Span(' | '),
-        dcc.Link('Stock Analysis', href='/stock_analysis'),
-        html.Span(' | '),
+    html.Nav(className='navbar', children=[
+        dcc.Link('Portfolio', href='/portfolio', className='nav-link'),
+        html.Span(' | ', className='nav-divider'),
+        dcc.Link('Stock Analysis', href='/stock_analysis', className='nav-link'),
+        html.Span(' | ', className='nav-divider'),
+        dcc.Link('Optimisation', href='/optimisation', className='nav-link')
     ]),
     html.Div(id='page-content')
 ])
 
+
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/portfolio':
-        return portfolio_layout
-    elif pathname == '/stock_analysis':
+    if pathname == '/stock_analysis':
         return analysis_layout
+    elif pathname == '/optimisation':
+        return optimisation_layout
     else:
-        return '404 Page not found'
+        return portfolio_layout
 
 if __name__ == '__main__':
     print('Running app.py')

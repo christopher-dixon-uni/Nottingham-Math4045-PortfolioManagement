@@ -149,7 +149,8 @@ analysis_layout = dbc.Container([ html.Div([
         id='ticker-dropdown',
         options=[{'label': ticker, 'value': ticker} for ticker in tickers],
         value=tickers[0],  # Default value
-        style={'width': '50%'}
+        style={'width': '50%', 'color': 'black'}
+
     ),
     
     # Forecast Plot
@@ -278,17 +279,17 @@ def update_ytd_cumulative_growth_graph(n_clicks, input_value):
     cumulative_growth = fetch_sector_etf_data()
     # sector names corresponding to tickers
     sector_names = {
-        'XLC':'Communication Services',
-        'XLY': 'Consumer Discretionary',
-        'XLP': 'Consumer Staples',
-        'XLE': 'Energy',
-        'XLF': 'Financials',
-        'XLV': 'Health Care',
-        'XLI': 'Industrials',
-        'XLB': 'Materials',
-        'XLRE': 'Real Estate',
-        'XLK': 'Technology',
-        'XLU': 'Utilities'
+        'XLC':'XLC - Communication Services',
+        'XLY': 'XLY - Consumer Discretionary',
+        'XLP': 'XLP - Consumer Staples',
+        'XLE': 'XLE - Energy',
+        'XLF': 'XLF - Financials',
+        'XLV': 'XLV - Health Care',
+        'XLI': 'XLI - Industrials',
+        'XLB': 'XLB - Materials',
+        'XLRE': 'XLRE - Real Estate',
+        'XLK': 'XLK - Technology',
+        'XLU': 'XLU - Utilities'
     }
     # Plot cumulative growth for YTD
     fig = go.Figure()
