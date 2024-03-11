@@ -14,6 +14,8 @@ import yfinance as yf
 from datetime import datetime, timedelta
 import optimise_get_returns as opt
 import dash_daq as daq
+from dash import html
+
 
 
 #styles
@@ -222,8 +224,9 @@ overall_returns_graph.update_layout(xaxis_title='Date',
 
 efficient_frontier_fig = opt.plot_efficient_frontier()
 
+
 # Define the layout for this page
-layout = dbc.Container([
+portfolio_layout = dbc.Container([
     # Title
     dbc.Row([
         dbc.Col(html.H1("Portfolio", className="text-center"), width=12),
@@ -251,7 +254,6 @@ layout = dbc.Container([
     dbc.Row([dcc.Graph(id='efficient-frontier-graph', figure = efficient_frontier_fig),]),
     
 ], fluid=True)
-
 
 
 
