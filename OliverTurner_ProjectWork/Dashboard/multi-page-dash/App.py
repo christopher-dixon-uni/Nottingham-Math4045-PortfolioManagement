@@ -9,7 +9,7 @@ from app_instance import app
 import dash_bootstrap_components as dbc
 from dash import html
 from pages.portfolio import portfolio_layout
-
+from pages.stock_analysis import analysis_layout
 
 pio.templates.default = "plotly_white"
 
@@ -18,8 +18,10 @@ server = app.server
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Nav([
-        dcc.Link('Portfolio', href='/portfolio')
-,  # Corrected href
+        dcc.Link('Portfolio', href='/portfolio'),
+        html.Span(' | '),
+        dcc.Link('Stock Analysis', href='/stock_analysis'),
+        html.Span(' | '),
     ]),
     html.Div(id='page-content')
 ])
@@ -27,8 +29,10 @@ app.layout = html.Div([
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/portfolio':  # Corrected pathname check
+    if pathname == '/portfolio':
         return portfolio_layout
+    elif pathname == '/stock_analysis':
+        return analysis_layout
     else:
         return '404 Page not found'
 
