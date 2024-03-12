@@ -95,8 +95,8 @@ def simulate_rebalanced_portfolio( adj_close_df, optimized_annual_return, optimi
        
        # Quarterly rebalancing (adjust portfolio value back to initial if it's a rebalance date)
        if date in rebalance_dates:
-           # For simplicity, this assumes rebalancing back to the initial value; adjust as needed
-           current_value = simulated_portfolio_values[-1]  # This line is simplistic; customize your rebalancing logic
+           # For simplicity, this assumes taking profits ever quarter
+           current_value = simulated_portfolio_values[0]  
        
    return pd.DataFrame(simulated_portfolio_values, index=daily_returns.index, columns=['Portfolio Value'])
 
@@ -121,7 +121,7 @@ def plot_stock_prices(adj_close_df):
 def plot_cumulative_capital(cumulative_capital):
    fig = go.Figure()
    fig.add_trace(go.Scatter(x=cumulative_capital.index, y=cumulative_capital['Portfolio Value'], mode='lines', name='Portfolio Value'))
-   fig.update_layout(title='Cumulative Capital Over Time with Quarterly Rebalancing',
+   fig.update_layout(title='Cumulative Capital Over Time with Quarterly Rebalancing and Profit Taking',
                      xaxis_title='Date',
                      yaxis_title='Portfolio Value in $',
                      template="plotly_dark",

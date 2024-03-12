@@ -229,7 +229,7 @@ efficient_frontier_fig = opt.plot_efficient_frontier()
 portfolio_layout = dbc.Container([
     # Title
     dbc.Row([
-        dbc.Col(html.H1("Portfolio", className="text-center"), width=12),
+        dbc.Col(html.H1("ML Prediction Portfolio", className="text-center"), width=12),
         dbc.Col(treemap_graph_component,width=12,)
     ]),
     # Date range
