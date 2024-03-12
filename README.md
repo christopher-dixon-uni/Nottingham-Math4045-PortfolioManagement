@@ -5,7 +5,7 @@ School of Mathematical Sciences
 Project 3: Portfolio management
 
 # Dashboard Demo
-[Dashboard Demo Video](./Dashboard Demo.mp4)
+[Dashboard Demo Video]("Dashboard Demo.mp4")
 
 # 1 Outline Brief
 
