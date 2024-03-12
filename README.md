@@ -4,6 +4,9 @@ School of Mathematical Sciences
 
 Project 3: Portfolio management
 
+# Dashboard Demo
+[Dashboard Demo Video](./Dashboard Demo.mp4)
+
 # 1 Outline Brief
 
 The project task is to formulate and evaluate a detailed strategy for the following scenario associated with
