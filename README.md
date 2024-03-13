@@ -7,12 +7,10 @@ Project 3: Portfolio management
 # Dashboard Demo
 
 
+https://github.com/christopher-dixon-uni/Nottingham-Math4045-PortfolioManagement/assets/86027606/fb2a70b8-66a5-425e-8892-a08f0de3314b
 
 
-https://github.com/christopher-dixon-uni/Nottingham-Math4045-PortfolioManagement/assets/86027606/3711fd37-b8dc-44ee-bee9-0942d226bfec
 
-
-[Dashboard Demo File](./Dashboard_Demo.mp4)
 
 # 1 Outline Brief
 
