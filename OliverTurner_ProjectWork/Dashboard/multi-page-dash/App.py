@@ -42,4 +42,4 @@ def display_page(pathname):
 if __name__ == '__main__':
     print('Running app.py')
     print('Please go to http://localhost:8050/ to view the dashboard.')
-    app.run_server(host='localhost', port=8050, debug=True)
+    app.run_server(host='localhost', port=8050, debug=False)

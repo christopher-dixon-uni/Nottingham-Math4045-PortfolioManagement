@@ -14,8 +14,6 @@ def return_stocks(max_stocks=500):
             stock_obj = yf.Ticker(ticker)
             stock_info = stock_obj.info
 
-            # Some adjustments may be needed if certain fields are not directly available or named differently
-            # For dividend yield, yfinance might provide 'dividendYield' or you might need to calculate it manually
             df = pd.DataFrame([{
                 'ticker': ticker,
                 'marketCap': stock_info.get('marketCap'),
@@ -40,9 +38,8 @@ def return_stocks(max_stocks=500):
         (data['earningsGrowth'] > 0)
     ]
 
-    return filtered_data
+    return 
 
-# Example of how to call the function
-# Adjust the `max_stocks` parameter as needed
+
 filtered_stocks = return_stocks(max_stocks=500)
 print(filtered_stocks)

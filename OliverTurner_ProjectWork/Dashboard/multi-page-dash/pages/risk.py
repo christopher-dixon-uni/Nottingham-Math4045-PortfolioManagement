@@ -281,7 +281,7 @@ def update_histogram(selected_stock):
     beta_values = [beta for _, beta in ranked_portfolio]
 
     # Create color scale based on beta values
-    color_scale = px.colors.diverging.RdBu[::-1]  # You can choose a different color scale
+    color_scale = px.colors.diverging.RdBu[::-1]
 
     figure = {
         'data': [
